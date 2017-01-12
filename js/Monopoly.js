@@ -2,6 +2,7 @@ var Monopoly = {};
 Monopoly.allowRoll = true;
 Monopoly.moneyAtStart = 10;
 Monopoly.doubleCounter = 0;
+Monopoly.broke = false;
 
 //prepare board
 Monopoly.init = function(){
@@ -54,22 +55,12 @@ Monopoly.updatePlayersMoney = function(player,amount){
     playersMoney -= amount;
     //if they are broke
     if (playersMoney < 0 ){
+        console.log("broke");
+        Monopoly.broke = true;
         var popup = Monopoly.getPopup("broke");
-        popup.find(".popup-content").addClass("loading-state");
-        Monopoly.showPopup("broke");
-        Monopoly.setNextPlayerTurn();
-        $(".property").each(function(){
-            if ($(this).hasClass(player)){
-                $(this).removeClass(player)
-                    .addClass("available")
-                    .removeAttr("data-owner")
-            }
-        })
-        $(player).remove("DIV");
-        var playerid = player.attr("id");
-        $("#"+playerid+"Score").remove("DIV");
-
-        Monopoly.updateScoreboard();
+        popup.find("button").unbind("click").bind("click",function(){
+            console.log("popup");
+        });
     }
     //if the player is not broke
     player.attr("data-money",playersMoney);
@@ -123,6 +114,7 @@ Monopoly.movePlayer = function(player,steps){
 
 //handles whatever the player lands on
 Monopoly.handleTurn = function(){
+    console.log("handleturn");
     var player = Monopoly.getCurrentPlayer();
     var playerCell = Monopoly.getPlayersCell(player);
      Monopoly.handlePayRent(player,playerCell);//remove after test
@@ -162,6 +154,7 @@ Monopoly.handleTurn = function(){
 
 //sets the next player
 Monopoly.setNextPlayerTurn = function(){
+    console.log("setnextplayerturn");
     //if a double was rolled, make sure the current player gets to play again
     if (Monopoly.doubleCounter < 3 && Monopoly.doubleCounter!=0){
         Monopoly.allowRoll = true;
@@ -174,7 +167,7 @@ Monopoly.setNextPlayerTurn = function(){
     //if player did not roll a double...
     else {
         //switches class of current turn to the next player
-         var currentPlayerTurn = Monopoly.getCurrentPlayer();
+        var currentPlayerTurn = Monopoly.getCurrentPlayer();
         var playerId = parseInt(currentPlayerTurn.attr("id").replace("player",""));
         var nextPlayerId = playerId + 1;
         if (nextPlayerId > $(".player").length){
@@ -196,6 +189,22 @@ Monopoly.setNextPlayerTurn = function(){
             }
             Monopoly.setNextPlayerTurn();
             return;
+        }
+        if (Monopoly.broke){
+            Monopoly.showPopup("broke");
+             $(".property").each(function(){
+                console.log("each");
+                if ($(this).hasClass(player)){
+                    $(this).removeClass(player)
+                        .addClass("available")
+                        .removeAttr("data-owner")
+                }
+            })
+            var playerid = currentPlayerTurn.attr("id");
+            $(playerid).remove("DIV");
+            $("#"+playerid+"Score").remove("DIV");
+            Monopoly.broke = false;
+            Monopoly.updateScoreboard();
         }
         Monopoly.closePopup();
         Monopoly.allowRoll = true;
